@@ -30,3 +30,35 @@ describe 'when defining states with no events' do
     methods.should include(:processed?)
   end
 end
+
+# State Machine with Events ==================================================
+
+class EventedStateClass
+  extend SimpleState
+
+  state_machine do
+    state :prepared do
+      event :process, :transitions_to => :processed
+    end
+
+    state :processed
+  end
+end
+
+describe 'when defining a state with an event' do
+  it 'should add a bang method for the transition' do
+    EventedStateClass.instance_methods.map { |m| m.to_sym }.should \
+      include(:process!)
+  end
+
+  it 'should raise an argument error if no :transitions_to is provided' do
+    lambda {
+      Class.new do
+        extend SimpleState
+        state_machine do
+          state(:prepared) { event :process }
+        end
+      end
+    }.should raise_error(ArgumentError)
+  end
+end
