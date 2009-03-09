@@ -66,6 +66,6 @@ describe 'when defining a state with an event' do
           state(:prepared) { event :process }
         end
       end
-    }.should raise_error(ArgumentError)
+    }.should raise_error(SimpleState::ArgumentError)
   end
 end

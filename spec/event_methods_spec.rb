@@ -11,9 +11,6 @@ describe 'Generated event methods when the transition is valid' do
 
       state :state_one
     end
-
-    # TODO: remove once default state is set.
-    @c.instance_variable_set(:@state, :begin)
   end
 
   it 'should return the new state' do
@@ -39,9 +36,6 @@ describe 'Generated event methods when the transition is not valid' do
 
       state :state_two
     end
-
-    # TODO: remove once default state is set.
-    @c.instance_variable_set(:@state, :begin)
   end
 
   it 'should return false' do
@@ -76,9 +70,6 @@ describe 'Generated event methods when mulitple states share the same event' do
       state :state_three
       state :state_four
     end
-
-    # TODO: remove once default state is set.
-    @path.instance_variable_set(:@state, :begin)
   end
 
   it 'should transition to state_three if currently in state_one' do
@@ -129,9 +120,6 @@ describe 'Generated event methods (integration)' do
       state :failed
       state :complete
     end
-
-    # TODO: remove once default state is set.
-    @c.instance_variable_set(:@state, :prepared)
   end
 
   it 'should successfully change the state to complete via the ' \

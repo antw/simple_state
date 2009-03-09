@@ -7,9 +7,6 @@ describe SimpleState, 'generated predicate methods' do
       state :state_two
       state :state_three
     end
-
-    # TODO: remove once default state is set.
-    @predicate_test.instance_variable_set(:@state, :state_one)
   end
 
   it 'should return true if the current state matches the predicate' do

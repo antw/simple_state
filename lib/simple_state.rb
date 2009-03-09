@@ -1,4 +1,7 @@
 module SimpleState
+  class Error < StandardError; end
+  class ArgumentError < Error; end
+
   ##
   # Sets up a state machine on the current class.
   #
@@ -8,3 +11,4 @@ module SimpleState
 end
 
 require 'simple_state/builder'
+require 'simple_state/mixins'

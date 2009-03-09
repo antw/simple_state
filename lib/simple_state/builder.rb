@@ -12,9 +12,10 @@ module SimpleState
   #     the list of states for the class, and the events belonging to each
   #     state (and the state that the event transitions to).
   #
-  #   * Two internal methods +_determine_new_state+ and +_valid_transition+
-  #     used internally by SimpleState for aiding the transition from one
-  #     state to another.
+  #   * Four internal methods +initial_state+, +initial_state=+,
+  #     +_determine_new_state+ and +_valid_transition+ which are used
+  #     internally by SimpleState for aiding the transition from one state to
+  #     another.
   #
   class Builder
     def initialize(klass)
@@ -26,27 +27,7 @@ module SimpleState
     #
     def build(&blk)
       @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        attr_reader :state unless method_defined?(:state)
-
-        unless method_defined?(:state=)
-          attr_writer :state
-          private :state=
-        end
-
-        # @api private
-        def self.states
-          @@states ||= {}
-        end
-
-        # @api private
-        def self._determine_new_state(current, to)
-          @@states[current] && (t = @@states[current].assoc(to)) && t.last
-        end
-
-        # @api private
-        def self._valid_transition?(current, to)
-          @@states[current] and not @@states[current].assoc(to).nil?
-        end
+        include ::SimpleState::Mixins
       RUBY
 
       instance_eval(&blk)
@@ -57,12 +38,13 @@ module SimpleState
     #
     # @param [Symbol] name
     #   The name of the state.
-    # @param [Block]  &blk
+    # @param [Block] &blk
     #   An optional block for defining transitions for the state. If no block
     #   is given, the state will be an end-point.
     #
     def state(name, &blk)
       @klass.states[name] = []
+      @klass.initial_state ||= name
 
       @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
         def #{name}?                # def prepared?
@@ -108,6 +90,16 @@ module SimpleState
         @klass.states[@state].push([event, opts[:transitions_to]])
 
         unless @klass.method_defined?(:"#{event}!")
+          # Example:
+          #
+          # def process!
+          #   if self.class._valid_transition?(self.state, :process)
+          #     self.state =
+          #       self.class._determine_new_state(self.state, :process)
+          #   else
+          #     false
+          #   end
+          # end
           @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{event}!
               if self.class._valid_transition?(self.state, :#{event})
@@ -117,15 +109,6 @@ module SimpleState
                 false
               end
             end
-
-            # def process!
-            #   if self.class._valid_transition?(self.state, :process)
-            #     self.state =
-            #       self.class._determine_new_state(self.state, :process)
-            #   else
-            #     false
-            #   end
-            # end
           RUBY
         end
       end
