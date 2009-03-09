@@ -13,6 +13,9 @@ begin
     gem.authors     = ["Anthony Williams"]
 
     gem.extra_rdoc_files = %w(README.markdown LICENSE)
+
+    gem.files = %w(LICENSE README.markdown Rakefile VERSION.yml) +
+                Dir.glob("{lib,spec}/**/*")
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install " \
