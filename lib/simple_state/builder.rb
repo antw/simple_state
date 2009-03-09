@@ -2,14 +2,27 @@ module SimpleState
   ##
   # Responsible for taking a state machine block and building the methods.
   #
+  # The builder is run whenever you call +state_machine+ on a class and does
+  # a number of things.
+  #
+  #   * Firstly, it adds a :state reader if one is not defined, and a
+  #     _private_ :state writer.
+  #
+  #   * It adds a +states+ method to the class, used for easily accessing
+  #     the list of states for the class, and the events belonging to each
+  #     state (and the state that the event transitions to).
+  #
+  #   * Two internal methods +_determine_new_state+ and +_valid_transition+
+  #     used internally by SimpleState for aiding the transition from one
+  #     state to another.
+  #
   class Builder
     def initialize(klass)
       @klass = klass
     end
 
     ##
-    # Trigger for building the state machine methods. Adds a +states+ reader
-    # and and a private writer if they aren't already defined.
+    # Trigger for building the state machine methods.
     #
     def build(&blk)
       @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
@@ -18,6 +31,21 @@ module SimpleState
         unless method_defined?(:state=)
           attr_writer :state
           private :state=
+        end
+
+        # @api private
+        def self.states
+          @@states ||= {}
+        end
+
+        # @api private
+        def self._determine_new_state(current, to)
+          @@states[current] && (t = @@states[current].assoc(to)) && t.last
+        end
+
+        # @api private
+        def self._valid_transition?(current, to)
+          @@states[current] and not @@states[current].assoc(to).nil?
         end
       RUBY
 
@@ -34,6 +62,8 @@ module SimpleState
     #   is given, the state will be an end-point.
     #
     def state(name, &blk)
+      @klass.states[name] = []
+
       @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
         def #{name}?                # def prepared?
           self.state == :#{name}    #   self.state == :prepared
@@ -68,17 +98,36 @@ module SimpleState
       # @param [Symbol] event_name A name for this event.
       # @param [Hash]   opts       An options hash for customising the event.
       #
-      def event(event_name, opts = {})
+      def event(event, opts = {})
         unless opts[:transitions_to].kind_of?(Symbol)
           raise ArgumentError, 'You must declare a :transitions_to state ' \
                                'when defining events'
-         end
+        end
 
-        @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-          def #{event_name}!                        # def process!
-            self.state = :#{opts[:transitions_to]}  #   self.state = :processed
-          end                                       # end
-        RUBY
+        # Keep track of valid transitions for this state.
+        @klass.states[@state].push([event, opts[:transitions_to]])
+
+        unless @klass.method_defined?(:"#{event}!")
+          @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+            def #{event}!
+              if self.class._valid_transition?(self.state, :#{event})
+                self.state =
+                  self.class._determine_new_state(self.state, :#{event})
+              else
+                false
+              end
+            end
+
+            # def process!
+            #   if self.class._valid_transition?(self.state, :process)
+            #     self.state =
+            #       self.class._determine_new_state(self.state, :process)
+            #   else
+            #     false
+            #   end
+            # end
+          RUBY
+        end
       end
     end
   end
