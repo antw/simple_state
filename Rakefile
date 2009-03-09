@@ -1,19 +1,25 @@
 require 'rubygems'
-require 'rake'
+require 'spec/rake/spectask'
 
 begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
-    gem.name = "simple_state"
-    gem.summary = %Q{TODO}
-    gem.email = "anthony@ninecraft.com"
-    gem.homepage = "http://github.com/anthonyw/simple_state"
-    gem.authors = ["Anthony Williams"]
-    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
+    gem.name        = "simple_state"
+    gem.platform    = Gem::Platform::RUBY
+    gem.summary     = 'A *very simple* state machine implementation.'
+    gem.description = gem.summary
+    gem.email       = "anthony@ninecraft.com"
+    gem.homepage    = "http://github.com/anthonyw/simple_state"
+    gem.authors     = ["Anthony Williams"]
+
+    gem.extra_rdoc_files = %w(README LICENSE)
   end
 rescue LoadError
-  puts "Jeweler not available. Install it with: sudo gem install technicalpickles-jeweler -s http://gems.github.com"
+  puts "Jeweler not available. Install it with: sudo gem install " \
+       "technicalpickles-jeweler -s http://gems.github.com"
 end
+
+# rDoc =======================================================================
 
 require 'rake/rdoctask'
 Rake::RDocTask.new do |rdoc|
@@ -24,17 +30,26 @@ Rake::RDocTask.new do |rdoc|
   rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.spec_files = FileList['spec/**/*_spec.rb']
+# rSpec & rcov ===============================================================
+
+desc "Run all examples (or a specific spec with TASK=xxxx)"
+Spec::Rake::SpecTask.new('spec') do |t|
+  t.spec_opts  = ["-c -f s"]
+  t.spec_files = begin
+    if ENV["TASK"]
+      ENV["TASK"].split(',').map { |task| "spec/**/#{task}_spec.rb" }
+    else
+      FileList['spec/**/*_spec.rb']
+    end
+  end
 end
 
-Spec::Rake::SpecTask.new(:rcov) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.pattern = 'spec/**/*_spec.rb'
-  spec.rcov = true
+desc "Run all examples with RCov"
+Spec::Rake::SpecTask.new('spec:rcov') do |t|
+  t.spec_files = FileList['spec/**/*.rb']
+  t.spec_opts = ['-c -f s']
+  t.rcov = true
+  t.rcov_opts = ['--exclude', 'spec']
 end
-
 
 task :default => :spec

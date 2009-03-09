@@ -1,0 +1,2 @@
+module SimpleState
+end
