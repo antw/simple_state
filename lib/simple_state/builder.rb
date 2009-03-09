@@ -75,7 +75,7 @@ module SimpleState
       end
 
       ##
-      # Defines a event and transition.
+      # Defines an event and transition.
       #
       # @param [Symbol] event_name A name for this event.
       # @param [Hash]   opts       An options hash for customising the event.
