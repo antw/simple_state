@@ -1,7 +1,0 @@
-= simple_state
-
-Description goes here.
-
-== Copyright
-
-Copyright (c) 2009 Anthony Williams. See LICENSE for details.

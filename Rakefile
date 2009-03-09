@@ -12,7 +12,7 @@ begin
     gem.homepage    = "http://github.com/anthonyw/simple_state"
     gem.authors     = ["Anthony Williams"]
 
-    gem.extra_rdoc_files = %w(README LICENSE)
+    gem.extra_rdoc_files = %w(README.markdown LICENSE)
   end
 rescue LoadError
   puts "Jeweler not available. Install it with: sudo gem install " \
