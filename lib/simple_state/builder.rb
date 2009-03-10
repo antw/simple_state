@@ -30,7 +30,21 @@ module SimpleState
         include ::SimpleState::Mixins
       RUBY
 
+      # Create an anonymous module which will be added to the state machine
+      # class's inheritance chain.
+      mod = @mod = Module.new do
+        def self.inspect
+          "SimpleState::#{@klass}StateMachine"
+        end
+      end
+
+      # Declare the state machine rules.
       instance_eval(&blk)
+
+      # Insert the anonymous module.
+      @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+        include mod
+      RUBY
     end
 
     ##
@@ -46,22 +60,22 @@ module SimpleState
       @klass.states[name] = []
       @klass.initial_state ||= name
 
-      @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+      @mod.class_eval <<-RUBY, __FILE__, __LINE__ + 1
         def #{name}?                # def prepared?
           self.state == :#{name}    #   self.state == :prepared
         end                         # end
       RUBY
 
       # Define transitions for this state.
-      StateBuilder.new(@klass, name).build(&blk) if blk
+      StateBuilder.new(@klass, @mod, name).build(&blk) if blk
     end
 
     ##
     # Responsible for building events for a given state.
     #
     class StateBuilder
-      def initialize(klass, state)
-        @klass, @state = klass, state
+      def initialize(klass, mod, state)
+        @klass, @module, @state = klass, mod, state
       end
 
       ##
@@ -89,7 +103,7 @@ module SimpleState
         # Keep track of valid transitions for this state.
         @klass.states[@state].push([event, opts[:transitions_to]])
 
-        unless @klass.method_defined?(:"#{event}!")
+        unless @module.method_defined?(:"#{event}!")
           # Example:
           #
           # def process!
@@ -100,7 +114,7 @@ module SimpleState
           #     false
           #   end
           # end
-          @klass.class_eval <<-RUBY, __FILE__, __LINE__ + 1
+          @module.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{event}!
               if self.class._valid_transition?(self.state, :#{event})
                 self.state =

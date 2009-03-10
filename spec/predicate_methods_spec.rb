@@ -17,4 +17,24 @@ describe SimpleState, 'generated predicate methods' do
     @predicate_test.should_not be_state_two
     @predicate_test.should_not be_state_three
   end
+
+  it 'should permit the use of super when overriding them' do
+    @c = Class.new do
+      attr_reader :called
+
+      extend SimpleState
+
+      state_machine do
+        state :begin
+      end
+
+      def begin?
+        @called = true
+        super()
+      end
+    end.new
+
+    lambda { @c.begin? }.should_not raise_error(NoMethodError)
+    @c.called.should be_true
+  end
 end

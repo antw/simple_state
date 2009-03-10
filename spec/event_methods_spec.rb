@@ -1,90 +1,118 @@
 require File.join(File.dirname(__FILE__), 'spec_helper.rb')
 
-# Event Validation ===========================================================
+describe 'Generated event methods' do
 
-describe 'Generated event methods when the transition is valid' do
-  before(:each) do
-    @c = state_class do
-      state :begin do
-        event :go, :transitions_to => :state_one
+  it 'should permit the use of super when overriding them' do
+    @c = Class.new do
+      attr_reader :called
+
+      extend SimpleState
+
+      state_machine do
+        state :begin do
+          event :go, :transitions_to => :finished
+        end
+
+        state :finished
       end
 
-      state :state_one
-    end
-  end
-
-  it 'should return the new state' do
-    @c.go!.should == :state_one
-  end
-
-  it 'should transition the instance to the new state' do
-    @c.go!
-    @c.should be_state_one
-  end
-end
-
-describe 'Generated event methods when the transition is not valid' do
-  before(:each) do
-    @c = state_class do
-      state :begin do
-        event :go, :transitions_to => :state_one
+      def go!
+        @called = true
+        super()
       end
+    end.new
 
-      state :state_one do
-        event :go_again, :transitions_to => :state_two
-      end
-
-      state :state_two
-    end
-  end
-
-  it 'should return false' do
-    @c.go_again!.should be_false
-  end
-
-  it "should not change the instance's state" do
-    @c.go_again!
     @c.should be_begin
+    lambda { @c.go! }.should_not raise_error(NoMethodError)
+    @c.should be_finished
+    @c.called.should be_true
   end
-end
 
+  # Event Validation =========================================================
 
-# Multiple Paths Definition ==================================================
+  describe 'when the transition is valid' do
+    before(:each) do
+      @c = state_class do
+        state :begin do
+          event :go, :transitions_to => :state_one
+        end
 
-describe 'Generated event methods when mulitple states share the same event' do
-  before(:each) do
-    @path = state_class do
-      state :begin do
-        event :s1, :transitions_to => :state_one
-        event :s2, :transitions_to => :state_two
+        state :state_one
       end
+    end
 
-      state :state_one do
-        event :go, :transitions_to => :state_three
-      end
+    it 'should return the new state' do
+      @c.go!.should == :state_one
+    end
 
-      state :state_two do
-        event :go, :transitions_to => :state_four
-      end
-
-      state :state_three
-      state :state_four
+    it 'should transition the instance to the new state' do
+      @c.go!
+      @c.should be_state_one
     end
   end
 
-  it 'should transition to state_three if currently in state_one' do
-    @path.s1!
-    @path.go!
-    @path.should be_state_three
+  describe 'when the transition is not valid' do
+    before(:each) do
+      @c = state_class do
+        state :begin do
+          event :go, :transitions_to => :state_one
+        end
+
+        state :state_one do
+          event :go_again, :transitions_to => :state_two
+        end
+
+        state :state_two
+      end
+    end
+
+    it 'should return false' do
+      @c.go_again!.should be_false
+    end
+
+    it "should not change the instance's state" do
+      @c.go_again!
+      @c.should be_begin
+    end
   end
 
-  it 'should transition to state_four if current in state_two' do
-    @path.s2!
-    @path.go!
-    @path.should be_state_four
+  # Multiple Paths Definition ================================================
+
+  describe 'when mulitple states share the same event' do
+    before(:each) do
+      @path = state_class do
+        state :begin do
+          event :s1, :transitions_to => :state_one
+          event :s2, :transitions_to => :state_two
+        end
+
+        state :state_one do
+          event :go, :transitions_to => :state_three
+        end
+
+        state :state_two do
+          event :go, :transitions_to => :state_four
+        end
+
+        state :state_three
+        state :state_four
+      end
+    end
+
+    it 'should transition to state_three if currently in state_one' do
+      @path.s1!
+      @path.go!
+      @path.should be_state_three
+    end
+
+    it 'should transition to state_four if current in state_two' do
+      @path.s2!
+      @path.go!
+      @path.should be_state_four
+    end
   end
+
 end
-
 
 # Test full workflow =========================================================
 # This tests all the possible transition permutations of a state machine.
