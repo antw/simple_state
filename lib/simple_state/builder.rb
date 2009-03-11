@@ -34,7 +34,7 @@ module SimpleState
       # class's inheritance chain.
       mod = @mod = Module.new do
         def self.inspect
-          "SimpleState::#{@klass}StateMachine"
+          "SimpleState::AnonymousMixin"
         end
       end
 
