@@ -10,37 +10,48 @@ There are several existing implementations of state machines in Ruby, notably
 cumbersome, when all I really needed was a lightweight means for setting the
 state of a class instance, and transitioning from one state to another.
 
-There is no support for adding your own code to customise transitions, nor is
-is there any support for callbacks or event guards. It's called
-**Simple**State for a reason! The library adds some helper methods to your
-class, keeps track of the valid states, makes sure that a transition is
-permitted, and that's about it.
+There is no explicit support for adding your own code to customise
+transitions, nor is there any support for callbacks or event guards (although
+you can still do similar things fairly trivially). It's called **Simple**State
+for a reason! The library adds some helper methods to your class, keeps track
+of the valid states, makes sure that a transition is permitted, and that's
+about it.
 
 ## Why use SimpleState?
 
- * Lightweight.
- * method_missing isn't used. ;)
- * No dependencies.
- * No extensions to core classes.
- * Tested on Ruby 1.8.6 (p287), 1.8.7 (p72), and 1.9.1 (p0).
- * Uses an API similar to Workflow, which I find to be more logical than that
-   in the acts\_as\_state\_machine family.
+<ul style="margin-top: 1em">
+  <li>Lightweight.</li>
+  <li>method_missing isn't used. ;)</li>
+  <li>No dependencies.</li>
+  <li>No extensions to core classes.</li>
+  <li>Tested on Ruby 1.8.6 (p287), 1.8.7 (p72), and 1.9.1 (p0).</li>
+  <li>Uses an API similar to Workflow, which I find to be more logical than
+    that in the acts_as_state_machine family.</li>
+</ul>
 
 ## Why use something else?
 
- * SimpleState has no support for customising transitions with your own code.
- * No support for callbacks.
- * No support for guard conditions.
- * SimpleState forces you to use an attribute called `state` - other libraries
-   let you choose whatever name you want.
- * Uses a class variable to keep track of transitions - doesn't lend itself
-   all that well to subclassing your state machines.
+<ul style="margin-top: 1em">
+  <li>The three libraries mentioned above make available, as part of their
+    DSL, a means of customising events/transitions with your own code.
+    SimpleState makes no such provision, however you can mimic the behaviour
+    quite easily as documented in example 3, below.</li>
+  <li>Similarly, some other libraries provide the ability to add guard
+    conditions -- a condition which must be satisfied before a transition
+    can take place. SimpleState also does explicitly support this, however it
+    is possible by adapting example 3.
+  <li>SimpleState forces you to use an attribute called `state` - other libraries
+    let you choose whatever name you want.</li>
+  <li>Uses a class variable to keep track of transitions - doesn't lend itself
+    all that well to subclassing your state machines.</li>
+</ul>
 
-The three libraries mentioned above have support for callbacks and guard
-conditions: if you need these features then you'd be better off choosing one
-of those libraries instead of SimpleState.
+If SimpleState's limitations are too much for you, then you are probably
+better off choosing one of the other libraries instead.
 
 ## Examples
+
+### Example 1: Basic usage
 
     require 'rubygems'
     require 'simple_state'
@@ -96,13 +107,15 @@ state of the instance.
 
     # etc...
 
+### Example 2: Events in multiple states
+
 It is possible for the same event to be used in multiple states:
 
     state :not_started do
       event :start,  :transitions_to => :started
       event :cancel, :transitions_to => :cancelled  # <--
     end
-    
+
     state :started do
       event :finish, :transitions_to => :finished
       event :cancel, :transitions_to => :cancelled  # <--
@@ -124,6 +137,73 @@ current state:
     state :finished
     state :cancelled
     state :cancelled_before_start
+
+### Example 3: Customising event transitions
+
+If the built in event methods aren't sufficient and you need to do extra stuff
+to your class during a particular event, you can simply override the method;
+the original method is available via `super`:
+
+    class OverriddenEvent
+      extend SimpleState
+
+      state_machine do
+        state :start do
+          event :start, :transitions_to => :started
+        end
+
+        state :started
+      end
+
+      def start!
+        puts "Before super() : state=#{self.state}"
+        ret = super
+        puts "After super() : state=#{self.state}"
+        ret
+      end
+    end
+
+    OverriddenEvent.new.start!
+    # => Before super() : state=start
+    # => After super() : state=finished
+    # => :started
+
+If the event transition isn't valid, super will simply return false, otherwise
+it will return the symbol representing the new state.
+
+    def start!
+      if new_state = super
+        puts "Started! The new state is #{self.state}"
+      else
+        puts "Could not start!"
+      end
+
+      new_state
+    end
+
+    machine = OverriddenEvent.new
+    machine.start!
+    => Started! The new state is finished
+    => :started
+
+    machine.start!
+    => Could not start!
+    => false
+
+If you need to know whether a transition will be permitted before you call
+super(), SimpleState provides `#event_permitted?`, expecting you to provide a
+symbol representing the event.
+
+    machine.event_permitted?(:start)
+    # => true|false
+
+This also provides an easy means for creating guard conditions:
+
+    def start!
+      if event_permitted?(:start) && SomeExternalService.can_start?(self)
+        super
+      end
+    end
 
 ## ORM Integration
 
