@@ -42,7 +42,7 @@ module SimpleState
       end
 
       # @api private
-      def _valid_transition?(current, to)
+      def _event_permitted?(current, to)
         states[current] and not states[current].assoc(to).nil?
       end
     end

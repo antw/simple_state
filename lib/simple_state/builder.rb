@@ -32,11 +32,25 @@ module SimpleState
 
       # Create an anonymous module which will be added to the state machine
       # class's inheritance chain.
-      mod = @mod = Module.new do
+      mod = @mod = Module.new
+      mod.class_eval <<-RUBY, __FILE__, __LINE__ + 1
         def self.inspect
-          "SimpleState::AnonymousMixin"
+          "SimpleState::#{@klass}AnonMixin"
         end
-      end
+
+        # Handles the change of state.
+        # @api private
+        def _change_state_using_event!(event)
+          self.state = self.class._determine_new_state(self.state, event)
+        end
+
+        # Returns if the passed event is permitted with the instance in it's
+        # current state.
+        # @api public
+        def event_permitted?(event)
+          self.class._event_permitted?(self.state, event)
+        end
+      RUBY
 
       # Declare the state machine rules.
       instance_eval(&blk)
@@ -107,7 +121,7 @@ module SimpleState
           # Example:
           #
           # def process!
-          #   if self.class._valid_transition?(self.state, :process)
+          #   if self.class._transition_permitted?(self.state, :process)
           #     self.state =
           #       self.class._determine_new_state(self.state, :process)
           #   else
@@ -116,9 +130,8 @@ module SimpleState
           # end
           @module.class_eval <<-RUBY, __FILE__, __LINE__ + 1
             def #{event}!
-              if self.class._valid_transition?(self.state, :#{event})
-                self.state =
-                  self.class._determine_new_state(self.state, :#{event})
+              if event_permitted?(:#{event})
+                _change_state_using_event!(:#{event})
               else
                 false
               end
