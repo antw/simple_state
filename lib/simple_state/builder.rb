@@ -50,6 +50,12 @@ module SimpleState
         def event_permitted?(event)
           self.class._event_permitted?(self.state, event)
         end
+
+        # Returns true if the given symbol matches the current state.
+        # @api public
+        def in_state?(state)
+          self.state == state
+        end
       RUBY
 
       # Declare the state machine rules.
@@ -75,9 +81,9 @@ module SimpleState
       @klass.initial_state ||= name
 
       @mod.class_eval <<-RUBY, __FILE__, __LINE__ + 1
-        def #{name}?                # def prepared?
-          self.state == :#{name}    #   self.state == :prepared
-        end                         # end
+        def #{name}?           # def prepared?
+          in_state?(:#{name})  #   self.state == :prepared
+        end                    # end
       RUBY
 
       # Define transitions for this state.
