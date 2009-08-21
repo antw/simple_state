@@ -9,7 +9,7 @@ begin
     gem.summary     = 'A *very simple* state machine implementation.'
     gem.description = gem.summary
     gem.email       = "anthony@ninecraft.com"
-    gem.homepage    = "http://github.com/anthonyw/simple_state"
+    gem.homepage    = "http://github.com/antw/simple_state"
     gem.authors     = ["Anthony Williams"]
 
     gem.extra_rdoc_files = %w(README.markdown LICENSE)
