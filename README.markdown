@@ -24,7 +24,8 @@ about it.
   <li>method_missing isn't used. ;)</li>
   <li>No dependencies.</li>
   <li>No extensions to core classes.</li>
-  <li>Tested on Ruby 1.8.6 (p287), 1.8.7 (p72), and 1.9.1 (p0).</li>
+  <li>Tested on Ruby 1.8.6 (p383), 1.8.7 (p174), 1.9.1 (p243), and JRuby
+    1.3.1.</li>
   <li>Uses an API similar to Workflow, which I find to be more logical than
     that in the acts_as_state_machine family.</li>
 </ul>
@@ -40,8 +41,8 @@ about it.
     conditions -- a condition which must be satisfied before a transition
     can take place. SimpleState also does explicitly support this, however it
     is possible by adapting example 3.
-  <li>SimpleState forces you to use an attribute called `state` - other libraries
-    let you choose whatever name you want.</li>
+  <li>SimpleState forces you to use an attribute called `state` - other
+    libraries let you choose whatever name you want.</li>
   <li>Uses a class variable to keep track of transitions - doesn't lend itself
     all that well to subclassing your state machines.</li>
 </ul>
