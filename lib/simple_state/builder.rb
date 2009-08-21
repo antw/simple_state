@@ -127,9 +127,8 @@ module SimpleState
           # Example:
           #
           # def process!
-          #   if self.class._transition_permitted?(self.state, :process)
-          #     self.state =
-          #       self.class._determine_new_state(self.state, :process)
+          #   if event_permitted?(:process)
+          #     _change_state_using_event!(:process)
           #   else
           #     false
           #   end
@@ -144,7 +143,8 @@ module SimpleState
             end
           RUBY
         end
-      end
-    end
-  end
-end
+      end # def event
+    end # StateBuilder
+
+  end # Builder
+end # SimpleState
