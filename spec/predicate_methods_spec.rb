@@ -37,4 +37,16 @@ describe SimpleState, 'generated predicate methods' do
     lambda { @c.begin? }.should_not raise_error(NoMethodError)
     @c.called.should be_true
   end
+
+  it 'should work when the state has been set to a String' do
+    # ... such as might be the case when persisting the state in a DB.
+
+    def @predicate_test.state
+      'state_two'
+    end
+
+    @predicate_test.should_not be_state_one
+    @predicate_test.should be_state_two
+    @predicate_test.should_not be_state_three
+  end
 end

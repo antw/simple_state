@@ -48,13 +48,13 @@ module SimpleState
         # current state.
         # @api public
         def event_permitted?(event)
-          self.class._event_permitted?(self.state, event)
+          self.class._event_permitted?(self.state.to_sym, event)
         end
 
         # Returns true if the given symbol matches the current state.
         # @api public
         def in_state?(state)
-          self.state == state
+          self.state.to_sym == state
         end
       RUBY
 
